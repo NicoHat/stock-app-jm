@@ -180,7 +180,7 @@ function AgregarForm({ onAgregar }) {
       </button>
 
       {exito && (
-        <p className="text-center text-[13px] text-emerald-600">✓ Producto guardado en Supabase</p>
+        <p className="text-center text-[13px] text-emerald-600">✓ Producto guardado</p>
       )}
     </div>
   );
@@ -188,7 +188,7 @@ function AgregarForm({ onAgregar }) {
 
 // ─── Pantalla compartir ─────────────────────────────────────────────
 function Compartir({ productos }) {
-  const empresa = "Mi Empresa"; // podés hacerlo editable si querés
+  const empresa = "Mi Empresa";
 
   const botones = [
     {
@@ -237,6 +237,7 @@ function Compartir({ productos }) {
 export default function App() {
   const { productos, loading, agregar, actualizar, eliminar } = useInventario();
   const [tab, setTab] = useState("inventario");
+  const [busqueda, setBusqueda] = useState("");
 
   if (loading) {
     return (
@@ -245,6 +246,12 @@ export default function App() {
       </div>
     );
   }
+
+  // Filtrar por nombre o categoría
+  const productosFiltrados = productos.filter((p) =>
+    p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    (p.categoria || "").toLowerCase().includes(busqueda.toLowerCase())
+  );
 
   const valorTotal = productos.reduce((a, p) => a + p.cantidad * p.precio, 0);
   const tabs = ["inventario", "+ agregar", "compartir"];
@@ -261,8 +268,9 @@ export default function App() {
           </svg>
           <h1 className="text-[18px] font-medium text-gray-900">Control de stock</h1>
         </div>
-        <p className="text-xs text-gray-400 mb-3">JUALMAL</p>
+        <p className="text-xs text-gray-400 mb-3">Mi Empresa</p>
 
+        {/* Tabs */}
         <div className="flex gap-2">
           {tabs.map((t) => (
             <button
@@ -278,6 +286,35 @@ export default function App() {
             </button>
           ))}
         </div>
+
+        {/* Buscador — solo visible en pestaña inventario */}
+        {tab === "inventario" && (
+          <div className="relative mt-3">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o categoría..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg pl-9 pr-8 py-2 text-[14px] text-gray-900 focus:outline-none focus:border-gray-400 transition-colors"
+            />
+            {busqueda && (
+              <button
+                onClick={() => setBusqueda("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Contenido */}
@@ -291,15 +328,26 @@ export default function App() {
               <MetricCard label="Valor total" value={fmt(valorTotal)} accent />
             </div>
 
-            {productos.length === 0 ? (
+            {/* Indicador de resultados cuando hay búsqueda activa */}
+            {busqueda && (
+              <p className="text-[12px] text-gray-400">
+                {productosFiltrados.length === 0
+                  ? `Sin resultados para "${busqueda}"`
+                  : `${productosFiltrados.length} resultado${productosFiltrados.length !== 1 ? "s" : ""} para "${busqueda}"`}
+              </p>
+            )}
+
+            {productosFiltrados.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
-                <p className="text-4xl mb-2">📦</p>
+                <p className="text-4xl mb-2">{busqueda ? "🔍" : "📦"}</p>
                 <p className="text-sm">
-                  Sin productos aún.<br />Usá la pestaña "+ agregar"
+                  {busqueda
+                    ? `No encontramos "${busqueda}"`
+                    : <>Sin productos aún.<br />Usá la pestaña "+ agregar"</>}
                 </p>
               </div>
             ) : (
-              productos.map((p) => (
+              productosFiltrados.map((p) => (
                 <ProductCard
                   key={p.id}
                   producto={p}

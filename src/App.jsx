@@ -540,6 +540,8 @@ function AgregarForm({ onAgregar }) {
           <option value="caja">Caja</option>
           <option value="pack">Pack</option>
           <option value="metro">Metro</option>
+          <option value="bolsa">Bolsa</option>
+          <option value="docena">Docena</option>
         </select>
       </div>
 

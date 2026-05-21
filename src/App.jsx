@@ -270,7 +270,7 @@ export default function App() {
           </svg>
           <h1 className="text-[18px] font-medium text-gray-900">Control de stock</h1>
         </div>
-        <p className="text-xs text-gray-400 mb-3">Mi Empresa</p>
+        <p className="text-xs text-gray-400 mb-3">JUALMAL</p>
 
         {/* Tabs */}
         <div className="flex gap-2">

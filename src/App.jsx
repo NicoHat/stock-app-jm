@@ -18,7 +18,11 @@ function ProductCard({ producto, onUpdate, onDelete }) {
           <p className="text-xs text-gray-400 mt-0.5">{producto.categoria || "Sin categoría"}</p>
         </div>
         <button
-          onClick={() => onDelete(producto.id)}
+          onClick={() => {
+            if (window.confirm(`¿Eliminar "${producto.nombre}"?`)) {
+              onDelete(producto.id)
+            }
+          }}
           className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded-md text-gray-400 hover:text-gray-700 hover:border-gray-300 transition-colors text-sm"
           aria-label={`Eliminar ${producto.nombre}`}
         >

@@ -31,15 +31,29 @@ function ProductCard({ producto, onUpdate, onDelete }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1">
           <label className="text-[11px] text-gray-400 uppercase tracking-wide">Cantidad</label>
-          <input
-            type="number"
-            min="0"
-            value={producto.cantidad}
-            onChange={(e) => onUpdate(producto.id, { cantidad: Number(e.target.value) })}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 focus:outline-none focus:border-gray-400 transition-colors"
-          />
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => onUpdate(producto.id, { cantidad: Math.max(0, producto.cantidad - 1) })}
+              className="px-3 py-2 text-gray-500 hover:bg-gray-100 active:bg-gray-200 transition-colors text-lg font-medium"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              min="0"
+              value={producto.cantidad}
+              onChange={(e) => onUpdate(producto.id, { cantidad: Number(e.target.value) })}
+              className="flex-1 text-center text-[14px] text-gray-900 focus:outline-none py-2 w-0"
+            />
+            <button
+              onClick={() => onUpdate(producto.id, { cantidad: producto.cantidad + 1 })}
+              className="px-3 py-2 text-gray-500 hover:bg-gray-100 active:bg-gray-200 transition-colors text-lg font-medium"
+            >
+              +
+            </button>
+            </div>
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-[11px] text-gray-400 uppercase tracking-wide">Precio costo</label>

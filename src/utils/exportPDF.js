@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable'
 
 const fmt = (n) => '$' + Number(n).toLocaleString('es-AR')
 
-export async function compartirPDF(productos, empresa = 'Mi Empresa') {
+export async function compartirPDF(productos, empresa = 'JUALMAL') {
   const doc = new jsPDF()
   const fecha = new Date().toLocaleDateString('es-AR')
   const total = productos.reduce((a, p) => a + p.cantidad * p.precio, 0)
@@ -42,7 +42,7 @@ export async function compartirPDF(productos, empresa = 'Mi Empresa') {
   }
 }
 
-export function compartirWhatsApp(productos, empresa = 'Mi Empresa') {
+export function compartirWhatsApp(productos, empresa = 'JUALMAL') {
   const fecha = new Date().toLocaleDateString('es-AR')
   const total = productos.reduce((a, p) => a + p.cantidad * p.precio, 0)
   let txt = `📦 INVENTARIO - ${empresa}\n📅 ${fecha}\n\n`
@@ -53,7 +53,7 @@ export function compartirWhatsApp(productos, empresa = 'Mi Empresa') {
   window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank')
 }
 
-export function compartirEmail(productos, empresa = 'Mi Empresa') {
+export function compartirEmail(productos, empresa = 'JUALMAL') {
   const fecha = new Date().toLocaleDateString('es-AR')
   const total = productos.reduce((a, p) => a + p.cantidad * p.precio, 0)
   let body = `INVENTARIO - ${empresa}\nFecha: ${fecha}\n\n`

@@ -13,9 +13,15 @@ function ProductCard({ producto, onUpdate, onDelete }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
       <div className="flex justify-between items-start">
-        <div>
+        <div className="flex flex-col gap-1.5">
           <p className="text-[15px] font-medium text-gray-900">{producto.nombre}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{producto.categoria || "Sin categoría"}</p>
+          {producto.categoria ? (
+            <span className="inline-flex w-fit items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[11px] font-medium">
+              {producto.categoria}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-400">Sin categoría</span>
+          )}
         </div>
         <button
           onClick={() => {
@@ -31,7 +37,7 @@ function ProductCard({ producto, onUpdate, onDelete }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-      <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <label className="text-[11px] text-gray-400 uppercase tracking-wide">Cantidad</label>
           <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
             <button
@@ -53,7 +59,7 @@ function ProductCard({ producto, onUpdate, onDelete }) {
             >
               +
             </button>
-            </div>
+          </div>
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-[11px] text-gray-400 uppercase tracking-wide">Precio costo</label>
@@ -66,6 +72,18 @@ function ProductCard({ producto, onUpdate, onDelete }) {
             className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 focus:outline-none focus:border-gray-400 transition-colors"
           />
         </div>
+      </div>
+
+      {/* Observaciones */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[11px] text-gray-400 uppercase tracking-wide">Observaciones</label>
+        <textarea
+          rows={2}
+          placeholder="Notas sobre este producto (vencimiento, proveedor, estado...)"
+          value={producto.observaciones || ""}
+          onChange={(e) => onUpdate(producto.id, { observaciones: e.target.value })}
+          className="border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-900 resize-none focus:outline-none focus:border-gray-400 transition-colors"
+        />
       </div>
 
       <div className="flex justify-between items-center pt-2 border-t border-gray-100">
@@ -286,7 +304,7 @@ export default function App() {
             <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
             <path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>
           </svg>
-          <h1 className="text-[18px] font-medium text-gray-900">Control de stock</h1>
+          <h1 className="text-[18px] font-medium text-gray-900">Control de stock diario Jualmal</h1>
         </div>
         <p className="text-xs text-gray-400 mb-3">JUALMAL</p>
 

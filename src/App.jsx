@@ -226,7 +226,7 @@ function AgregarForm({ onAgregar }) {
 
 // ─── Pantalla compartir ─────────────────────────────────────────────
 function Compartir({ productos }) {
-  const empresa = "Mi Empresa";
+  const empresa = "JUALMAL";
 
   const botones = [
     {

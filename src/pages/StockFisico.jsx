@@ -286,10 +286,18 @@ export default function App() {
   }
 
   // Filtrar por nombre o categoría
-  const productosFiltrados = productos.filter((p) =>
-    p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    (p.categoria || "").toLowerCase().includes(busqueda.toLowerCase())
-  );
+  // Filtrar por nombre o categoría
+  const productosFiltrados = productos
+    .filter((p) =>
+      p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+      (p.categoria || "").toLowerCase().includes(busqueda.toLowerCase())
+    )
+    .sort((a, b) => {
+      const catA = (a.categoria || "Sin categoría").toLowerCase();
+      const catB = (b.categoria || "Sin categoría").toLowerCase();
+      if (catA !== catB) return catA.localeCompare(catB);
+      return a.nombre.localeCompare(b.nombre); // dentro de la misma categoría, por nombre
+    });
 
   const valorTotal = productos.reduce((a, p) => a + p.cantidad * p.precio, 0);
   const tabs = ["inventario", "+ agregar", "compartir"];

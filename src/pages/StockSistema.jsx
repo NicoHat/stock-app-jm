@@ -68,6 +68,13 @@ export default function StockSistema() {
     );
   }
 
+  const productosOrdenados = [...productos].sort((a, b) => {
+    const catA = (a.categoria || "Sin categoría").toLowerCase();
+    const catB = (b.categoria || "Sin categoría").toLowerCase();
+    if (catA !== catB) return catA.localeCompare(catB);
+    return a.nombre.localeCompare(b.nombre);
+  });
+
   const totalDiferencias = productos.filter(
     (p) => p.cantidad_fisico - p.cantidad_sistema !== 0
   ).length;
@@ -88,9 +95,9 @@ export default function StockSistema() {
       </div>
 
       <div className="flex-1 px-4 py-4 flex flex-col gap-3 pb-8">
-        {productos.map((p) => (
+        {productosOrdenados.map((p) => (
           <TarjetaSistema key={p.id} producto={p} onUpdate={actualizarCantidad} />
-        ))}
+          ))}
       </div>
     </div>
   );

@@ -1,13 +1,31 @@
 import { useState } from "react";
 import { useInventario } from "../hooks/useInventario";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
+import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
+
+function BotonCerrarSesion() {
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
+
+  return (
+    <button onClick={handleLogout}>
+      Cerrar sesión
+    </button>
+  )
+}
+
 
 // ─── Helpers ───────────────────────────────────────────────────────
 const fmt = (n) =>
   "$" + Number(n).toLocaleString("es-AR", { minimumFractionDigits: 0 });
 
 // ─── Tarjeta de producto ────────────────────────────────────────────
-function ProductCard({ producto, onUpdate, onDelete }) {
+function ProductCard({ producto, onUpdate }) {
   const subtotal = producto.cantidad * producto.precio;
 
   return (
@@ -23,17 +41,6 @@ function ProductCard({ producto, onUpdate, onDelete }) {
             <span className="text-xs text-gray-400">Sin categoría</span>
           )}
         </div>
-        <button
-          onClick={() => {
-            if (window.confirm(`¿Eliminar "${producto.nombre}"?`)) {
-              onDelete(producto.id)
-            }
-          }}
-          className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded-md text-gray-400 hover:text-gray-700 hover:border-gray-300 transition-colors text-sm"
-          aria-label={`Eliminar ${producto.nombre}`}
-        >
-          ×
-        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -106,124 +113,6 @@ function MetricCard({ label, value, accent = false }) {
   );
 }
 
-// ─── Formulario agregar ─────────────────────────────────────────────
-function AgregarForm({ onAgregar }) {
-  const [form, setForm] = useState({
-    nombre: "",
-    categoria: "",
-    cantidad: "",
-    precio: "",
-    unidad: "unidad",
-  });
-  const [exito, setExito] = useState(false);
-  const [cargando, setCargando] = useState(false);
-
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-
-  const handleSubmit = async () => {
-    if (!form.nombre || form.cantidad === "" || form.precio === "") return;
-    setCargando(true);
-    await onAgregar({
-      nombre: form.nombre,
-      categoria: form.categoria,
-      cantidad: Number(form.cantidad),
-      precio: Number(form.precio),
-      unidad: form.unidad,
-    });
-    setForm({ nombre: "", categoria: "", cantidad: "", precio: "", unidad: "unidad" });
-    setCargando(false);
-    setExito(true);
-    setTimeout(() => setExito(false), 2000);
-  };
-
-  const inputClass =
-    "border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 w-full focus:outline-none focus:border-gray-400 transition-colors";
-
-  return (
-    <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-3">
-      <p className="text-[14px] font-medium text-gray-900">Nuevo producto</p>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-gray-400 uppercase tracking-wide">Nombre *</label>
-        <input
-          type="text"
-          placeholder="Ej: Yerba mate 1kg"
-          value={form.nombre}
-          onChange={(e) => set("nombre", e.target.value)}
-          className={inputClass}
-        />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-gray-400 uppercase tracking-wide">Categoría</label>
-        <input
-          type="text"
-          placeholder="Ej: Almacén, Limpieza..."
-          value={form.categoria}
-          onChange={(e) => set("categoria", e.target.value)}
-          className={inputClass}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-gray-400 uppercase tracking-wide">Cantidad *</label>
-          <input
-            type="number"
-            placeholder="0"
-            min="0"
-            value={form.cantidad}
-            onChange={(e) => set("cantidad", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-gray-400 uppercase tracking-wide">Precio *</label>
-          <input
-            type="number"
-            placeholder="0.00"
-            min="0"
-            step="0.01"
-            value={form.precio}
-            onChange={(e) => set("precio", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-gray-400 uppercase tracking-wide">Unidad</label>
-        <select
-          value={form.unidad}
-          onChange={(e) => set("unidad", e.target.value)}
-          className={inputClass}
-        >
-          <option value="unidad">Unidad</option>
-          <option value="kg">Kilogramo (kg)</option>
-          <option value="litro">Litro</option>
-          <option value="caja">Caja</option>
-          <option value="pack">Pack</option>
-          <option value="metro">Metro</option>
-          <option value="bolsa">Bolsa</option>
-          <option value="docena">Docena</option>
-        </select>
-      </div>
-
-      <button
-        onClick={handleSubmit}
-        disabled={cargando}
-        className="w-full bg-gray-900 text-white rounded-lg py-2.5 text-[14px] font-medium hover:bg-gray-700 active:scale-[0.98] transition-all disabled:opacity-50"
-      >
-        {cargando ? "Guardando..." : "Agregar al inventario"}
-      </button>
-
-      {exito && (
-        <p className="text-center text-[13px] text-emerald-600">✓ Producto guardado</p>
-      )}
-    </div>
-  );
-}
-
 // ─── Pantalla compartir ─────────────────────────────────────────────
 function Compartir({ productos }) {
   const empresa = "JUALMAL";
@@ -273,7 +162,7 @@ function Compartir({ productos }) {
 
 // ─── App principal ──────────────────────────────────────────────────
 export default function App() {
-  const { productos, loading, agregar, actualizar, eliminar } = useInventario();
+  const { productos, loading, actualizar } = useInventario();
   const [tab, setTab] = useState("inventario");
   const [busqueda, setBusqueda] = useState("");
 
@@ -285,7 +174,6 @@ export default function App() {
     );
   }
 
-  // Filtrar por nombre o categoría
   // Filtrar por nombre o categoría
   const productosFiltrados = productos
     .filter((p) =>
@@ -300,7 +188,7 @@ export default function App() {
     });
 
   const valorTotal = productos.reduce((a, p) => a + p.cantidad * p.precio, 0);
-  const tabs = ["inventario", "+ agregar", "compartir"];
+  const tabs = ["inventario", "compartir"];
 
   return (
     <div className="min-h-screen bg-white max-w-sm mx-auto flex flex-col">
@@ -389,7 +277,7 @@ export default function App() {
                 <p className="text-sm">
                   {busqueda
                     ? `No encontramos "${busqueda}"`
-                    : <>Sin productos aún.<br />Usá la pestaña "+ agregar"</>}
+                    : "Sin productos aún."}
                 </p>
               </div>
             ) : (
@@ -398,15 +286,11 @@ export default function App() {
                   key={p.id}
                   producto={p}
                   onUpdate={actualizar}
-                  onDelete={eliminar}
                 />
               ))
             )}
           </>
         )}
-
-        {/* TAB: Agregar */}
-        {tab === "+ agregar" && <AgregarForm onAgregar={agregar} />}
 
         {/* TAB: Compartir */}
         {tab === "compartir" && <Compartir productos={productos} />}

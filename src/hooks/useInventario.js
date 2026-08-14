@@ -44,10 +44,5 @@ export function useInventario() {
     return { error }
   }
 
-  const eliminar = async (id) => {
-    const { error } = await supabase.from('productos').delete().eq('id', id)
-    return { error }
-  }
-
-  return { productos, loading, agregar, actualizar, eliminar }
+  return { productos, loading, agregar, actualizar }
 }

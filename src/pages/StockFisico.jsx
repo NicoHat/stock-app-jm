@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useInventario } from "../hooks/useInventario";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
+import ConteoBar from "../components/ConteoBar";
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+
 
 function BotonCerrarSesion() {
   const navigate = useNavigate()
@@ -261,6 +263,8 @@ export default function App() {
               <MetricCard label="Productos" value={productos.length} />
               <MetricCard label="Valor total" value={fmt(valorTotal)} accent />
             </div>
+
+            <ConteoBar tipo="fisico" />
 
             {/* Indicador de resultados cuando hay búsqueda activa */}
             {busqueda && (

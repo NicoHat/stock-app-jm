@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStockSistema } from "../hooks/useStockSistema";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
+import ConteoBar from "../components/ConteoBar";
 
 // ─── Tarjeta de producto ────────────────────────────────────────────
 function ProductCard({ producto, onUpdate }) {
@@ -212,6 +213,8 @@ export default function StockSistema() {
               <MetricCard label="Productos" value={productos.length} />
               <MetricCard label="Unidades totales" value={totalUnidades} accent />
             </div>
+
+            <ConteoBar tipo="sistema" />
 
             {busqueda && (
               <p className="text-[12px] text-gray-400">

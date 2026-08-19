@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useVerduleria } from "../hooks/useVerduleria";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
+import ConteoBar from "../components/ConteoBar";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -304,6 +305,8 @@ export default function StockVerduleria() {
               <MetricCard label="Productos" value={productos.length} />
               <MetricCard label="Valor total" value={fmt(valorTotal)} accent />
             </div>
+
+            <ConteoBar tipo="verduleria" />
 
             {busqueda && (
               <p className="text-[12px] text-gray-400">

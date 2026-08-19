@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useComparacion } from "../hooks/useComparacion";
+import ResumenConteos from "../components/ResumenConteos";
 
 // ─── Tarjeta de producto (solo lectura) ─────────────────────────────
 function TarjetaComparacion({ producto }) {
@@ -135,6 +136,9 @@ export default function StockAdmin() {
 
       {/* Contenido */}
       <div className="flex-1 px-4 py-4 flex flex-col gap-3 pb-8">
+
+        <ResumenConteos />
+
         <div className="grid grid-cols-2 gap-3">
           <MetricCard label="Productos" value={productos.length} />
           <MetricCard

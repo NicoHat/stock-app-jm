@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStockSistema } from "../hooks/useStockSistema";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
+import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
 
 // ─── Tarjeta de producto ────────────────────────────────────────────
@@ -76,6 +77,19 @@ function Compartir({ productos }) {
       label: "Generar y compartir PDF",
       desc: "Abre el menú nativo del celular (WhatsApp, Drive, email...)",
       onClick: () => compartirPDF(productos, empresa),
+    },
+    {
+      icon: "📊",
+      label: "Exportar a Excel",
+      desc: "Descarga un archivo .xlsx con todo el inventario",
+      onClick: () => exportarExcel(productos, "stock_sistema", [
+        { header: "Producto", key: "nombre" },
+        { header: "Categoría", key: "categoria" },
+        { header: "Cantidad", key: "cantidad" },
+        { header: "Unidad", key: "unidad" },
+        { header: "Precio costo", key: "precio" },
+        { header: "Subtotal", value: (p) => p.cantidad * p.precio },
+      ]),
     },
     {
       icon: "💬",

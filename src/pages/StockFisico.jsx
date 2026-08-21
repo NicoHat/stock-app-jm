@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useInventario } from "../hooks/useInventario";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
+import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
@@ -125,6 +126,19 @@ function Compartir({ productos }) {
       label: "Generar y compartir PDF",
       desc: "Abre el menú nativo del celular (WhatsApp, Drive, email...)",
       onClick: () => compartirPDF(productos, empresa),
+    },
+    {
+      icon: "📊",
+      label: "Exportar a Excel",
+      desc: "Descarga un archivo .xlsx con todo el inventario",
+      onClick: () => exportarExcel(productos, "stock_fisico", [
+        { header: "Producto", key: "nombre" },
+        { header: "Categoría", key: "categoria" },
+        { header: "Cantidad", key: "cantidad" },
+        { header: "Unidad", key: "unidad" },
+        { header: "Precio costo", key: "precio" },
+        { header: "Subtotal", value: (p) => p.cantidad * p.precio },
+      ]),
     },
     {
       icon: "💬",

@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useComparacion } from "../hooks/useComparacion";
+import { useValorizado } from "../hooks/useValorizado";
 import ResumenConteos from "../components/ResumenConteos";
 
 // ─── Tarjeta de producto (solo lectura) ─────────────────────────────
+const fmt = (n) =>
+  "$" + Number(n).toLocaleString("es-AR", { minimumFractionDigits: 0 });
+
 function TarjetaComparacion({ producto }) {
   const diferencia = producto.cantidad_fisico - producto.cantidad_sistema;
   const coincide = diferencia === 0;
@@ -64,6 +68,7 @@ function MetricCard({ label, value, accent = false }) {
 // ─── App principal ──────────────────────────────────────────────────
 export default function StockAdmin() {
   const { productos, loading } = useComparacion();
+  const { valorFisico, valorVerduleria, loading: loadingValorizado } = useValorizado();
   const [busqueda, setBusqueda] = useState("");
 
   if (loading) {
@@ -136,7 +141,10 @@ export default function StockAdmin() {
 
       {/* Contenido */}
       <div className="flex-1 px-4 py-4 flex flex-col gap-3 pb-8">
-
+        <div className="grid grid-cols-2 gap-3">
+          <MetricCard label="Stock Físico" value={fmt(valorFisico)} accent />
+          <MetricCard label="Stock Verdulería" value={fmt(valorVerduleria)} accent />
+        </div>
         <ResumenConteos />
 
         <div className="grid grid-cols-2 gap-3">

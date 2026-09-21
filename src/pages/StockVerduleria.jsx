@@ -3,66 +3,11 @@ import { useVerduleria } from "../hooks/useVerduleria";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
 import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
+import ProductCard from "../components/ProductCard"; // 👈 1. Importar componente unificado
 
 // ─── Helpers ───────────────────────────────────────────────────────
 const fmt = (n) =>
   "$" + Number(n).toLocaleString("es-AR", { minimumFractionDigits: 0 });
-
-// ─── Tarjeta de producto ────────────────────────────────────────────
-function ProductCard({ producto, onUpdate }) {
-  const subtotal = producto.cantidad * producto.precio;
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
-      <p className="text-[15px] font-medium text-gray-900">{producto.nombre}</p>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-gray-400 uppercase tracking-wide">
-            Cantidad ({producto.unidad})
-          </label>
-          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-            <button
-              onClick={() => onUpdate(producto.id, { cantidad: Math.max(0, producto.cantidad - 1) })}
-              className="px-3 py-2 text-gray-500 hover:bg-gray-100 active:bg-gray-200 transition-colors text-lg font-medium"
-            >
-              −
-            </button>
-            <input
-              type="number"
-              min="0"
-              value={producto.cantidad}
-              onChange={(e) => onUpdate(producto.id, { cantidad: Number(e.target.value) })}
-              className="flex-1 text-center text-[14px] text-gray-900 focus:outline-none py-2 w-0"
-            />
-            <button
-              onClick={() => onUpdate(producto.id, { cantidad: producto.cantidad + 1 })}
-              className="px-3 py-2 text-gray-500 hover:bg-gray-100 active:bg-gray-200 transition-colors text-lg font-medium"
-            >
-              +
-            </button>
-          </div>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-gray-400 uppercase tracking-wide">Precio costo</label>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={producto.precio}
-            onChange={(e) => onUpdate(producto.id, { precio: Number(e.target.value) })}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 focus:outline-none focus:border-gray-400 transition-colors"
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-        <span className="text-xs text-gray-400">Subtotal</span>
-        <span className="text-[15px] font-medium text-emerald-600">{fmt(subtotal)}</span>
-      </div>
-    </div>
-  );
-}
 
 // ─── Métricas ───────────────────────────────────────────────────────
 function MetricCard({ label, value, accent = false }) {
@@ -245,7 +190,7 @@ export default function StockVerduleria() {
     .filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()))
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-  const valorTotal = productos.reduce((a, p) => a + p.cantidad * p.precio, 0);
+  const valorTotal = productos.reduce((a, p) => a + (p.cantidad || 0) * (p.precio || 0), 0);
   const tabs = ["inventario", "agregar", "compartir"];
 
   return (

@@ -3,57 +3,7 @@ import { useStockSistema } from "../hooks/useStockSistema";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
 import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
-
-// ─── Tarjeta de producto ────────────────────────────────────────────
-function ProductCard({ producto, onUpdate }) {
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
-      <div className="flex justify-between items-start">
-        <div className="flex flex-col gap-1.5">
-          <p className="text-[15px] font-medium text-gray-900">{producto.nombre}</p>
-          {producto.categoria ? (
-            <span className="inline-flex w-fit items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[11px] font-medium">
-              {producto.categoria}
-            </span>
-          ) : (
-            <span className="text-xs text-gray-400">Sin categoría</span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-gray-400 uppercase tracking-wide">Cantidad</label>
-        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden w-fit">
-          <button
-            onClick={() =>
-              onUpdate(producto.id, producto.stock_sistema_id, Math.max(0, producto.cantidad - 1))
-            }
-            className="px-3 py-2 text-gray-500 hover:bg-gray-100 active:bg-gray-200 transition-colors text-lg font-medium"
-          >
-            −
-          </button>
-          <input
-            type="number"
-            min="0"
-            value={producto.cantidad}
-            onChange={(e) =>
-              onUpdate(producto.id, producto.stock_sistema_id, Number(e.target.value))
-            }
-            className="w-16 text-center text-[14px] text-gray-900 focus:outline-none py-2"
-          />
-          <button
-            onClick={() =>
-              onUpdate(producto.id, producto.stock_sistema_id, producto.cantidad + 1)
-            }
-            className="px-3 py-2 text-gray-500 hover:bg-gray-100 active:bg-gray-200 transition-colors text-lg font-medium"
-          >
-            +
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import ProductCard from "../components/ProductCard"; // 👈 1. Importar el componente unificado
 
 // ─── Métricas ───────────────────────────────────────────────────────
 function MetricCard({ label, value, accent = false }) {
@@ -88,7 +38,7 @@ function Compartir({ productos }) {
         { header: "Cantidad", key: "cantidad" },
         { header: "Unidad", key: "unidad" },
         { header: "Precio costo", key: "precio" },
-        { header: "Subtotal", value: (p) => p.cantidad * p.precio },
+        { header: "Subtotal", value: (p) => (p.cantidad || 0) * (p.precio || 0) },
       ]),
     },
     {
@@ -153,7 +103,7 @@ export default function StockSistema() {
       return a.nombre.localeCompare(b.nombre);
     });
 
-  const totalUnidades = productos.reduce((a, p) => a + p.cantidad, 0);
+  const totalUnidades = productos.reduce((a, p) => a + (p.cantidad || 0), 0);
   const tabs = ["inventario", "compartir"];
 
   return (
@@ -247,7 +197,11 @@ export default function StockSistema() {
               </div>
             ) : (
               productosFiltrados.map((p) => (
-                <ProductCard key={p.id} producto={p} onUpdate={actualizarCantidad} />
+                <ProductCard 
+                  key={p.id} 
+                  producto={p} 
+                  onUpdate={(id, partial) => actualizarCantidad(id, p.stock_sistema_id, partial.cantidad)} 
+                />
               ))
             )}
           </>

@@ -4,6 +4,7 @@ import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/export
 import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
 import ProductCard from '../components/ProductCard';
+import { supabase } from "../lib/supabase";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -86,6 +87,34 @@ export default function App() {
   const { productos, loading, actualizar } = useInventario();
   const [tab, setTab] = useState("inventario");
   const [busqueda, setBusqueda] = useState("");
+  
+  // Estado para el input de desperdicio de palta y feedback visual
+  const [kilosPalta, setKilosPalta] = useState("");
+  const [guardandoPalta, setGuardandoPalta] = useState(false);
+
+  // Función para registrar el desperdicio en Supabase
+  const handleGuardarDesperdicio = async () => {
+    const cantidadKg = parseFloat(kilosPalta);
+    if (!cantidadKg || cantidadKg <= 0) {
+      alert("Por favor, ingresá una cantidad válida en kg.");
+      return;
+    }
+
+    setGuardandoPalta(true);
+    const { error } = await supabase
+      .from('avocado_waste')
+      .insert([{ quantity_kg: cantidadKg }]);
+
+    setGuardandoPalta(false);
+
+    if (error) {
+      console.error("Error al guardar desperdicio:", error);
+      alert("Hubo un error al guardar el registro.");
+    } else {
+      alert("¡Desperdicio de palta guardado con éxito!");
+      setKilosPalta(""); // Limpiamos el input
+    }
+  };
 
   if (loading) {
     return (
@@ -208,6 +237,31 @@ export default function App() {
                 />
               ))
             )}
+
+            {/* ─── Apartado: Desperdicios Palta ─── */}
+            <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[14px] font-medium text-gray-900">🥑 Desperdicios Palta</span>
+                <span className="text-[12px] text-gray-400">Registro diario</span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="Cantidad en kg..."
+                  value={kilosPalta}
+                  onChange={(e) => setKilosPalta(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-[14px] bg-white text-gray-900 focus:outline-none focus:border-gray-400 transition-colors"
+                />
+                <button
+                  onClick={handleGuardarDesperdicio}
+                  disabled={guardandoPalta}
+                  className="bg-gray-900 text-white px-4 py-2 rounded-lg text-[14px] font-medium hover:bg-gray-800 active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  {guardandoPalta ? "Guardando..." : "Guardar"}
+                </button>
+              </div>
+            </div>
           </>
         )}
 

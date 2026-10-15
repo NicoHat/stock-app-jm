@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useComparacion } from "../hooks/useComparacion";
 import { useValorizado } from "../hooks/useValorizado";
 import ResumenConteos from "../components/ResumenConteos";
+import { supabase } from "../lib/supabase";
 
 // ─── Tarjeta de producto (solo lectura) ─────────────────────────────
 const fmt = (n) =>
@@ -65,11 +66,40 @@ function MetricCard({ label, value, accent = false }) {
   );
 }
 
-// ─── App principal ──────────────────────────────────────────────────
+// ─── App principal (Admin) ──────────────────────────────────────────
 export default function StockAdmin() {
   const { productos, loading } = useComparacion();
-  const { valorFisico, valorVerduleria, loading: loadingValorizado } = useValorizado();
+  const { valorFisico, valorVerduleria } = useValorizado();
   const [busqueda, setBusqueda] = useState("");
+
+  // Estados para el desperdicio de palta en Admin
+  const [desperdicios, setDesperdicios] = useState([]);
+  const [loadingDesperdicios, setLoadingDesperdicios] = useState(true);
+
+  // Cargar registros de desperdicios desde Supabase
+  useEffect(() => {
+    async function fetchDesperdicios() {
+      const { data, error } = await supabase
+        .from('avocado_waste')
+        .select('*')
+        .order('recorded_date', { ascending: false });
+
+      if (error) {
+        console.error("Error al cargar desperdicios:", error);
+      } else {
+        setDesperdicios(data || []);
+      }
+      setLoadingDesperdicios(false);
+    }
+
+    fetchDesperdicios();
+  }, []);
+
+  // Calcular acumulado total de kg de palta desperdiciada
+  const totalDesperdicioKg = desperdicios.reduce(
+    (acc, curr) => acc + Number(curr.quantity_kg || 0),
+    0
+  );
 
   if (loading) {
     return (
@@ -154,6 +184,31 @@ export default function StockAdmin() {
             value={totalDiferencias}
             accent={totalDiferencias === 0}
           />
+        </div>
+
+        {/* ─── Apartado: Desperdicios de Palta (Admin) ─── */}
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-medium text-gray-900">🥑 Desperdicios de Palta</span>
+            <span className="text-[12px] font-emerald-600 font-medium">
+              Total: {totalDesperdicioKg.toFixed(1)} kg
+            </span>
+          </div>
+
+          {loadingDesperdicios ? (
+            <p className="text-[12px] text-gray-400 text-center py-2">Cargando registros...</p>
+          ) : desperdicios.length === 0 ? (
+            <p className="text-[12px] text-gray-400 text-center py-2">No hay registros de desperdicio aún.</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
+              {desperdicios.map((item) => (
+                <div key={item.id} className="flex justify-between items-center bg-white border border-gray-100 rounded-lg px-3 py-2 text-[13px]">
+                  <span className="text-gray-500">{item.recorded_date}</span>
+                  <span className="font-medium text-gray-900">{item.quantity_kg} kg</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {busqueda && (

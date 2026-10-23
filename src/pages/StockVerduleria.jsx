@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useVerduleria } from "../hooks/useVerduleria";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
 import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
-import ProductCard from "../components/ProductCard"; // 👈 1. Importar componente unificado
+import ProductCard from "../components/ProductCard";
+import { supabase } from "../lib/supabase";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -21,94 +22,191 @@ function MetricCard({ label, value, accent = false }) {
   );
 }
 
-// ─── Pantalla agregar ───────────────────────────────────────────────
-function Agregar({ onAgregar }) {
-  const [nombre, setNombre] = useState("");
-  const [unidad, setUnidad] = useState("kg");
-  const [precio, setPrecio] = useState("");
+// ─── Pantalla Desperdicios ──────────────────────────────────────────
+function Desperdicios({ productos }) {
+  const [productoId, setProductoId] = useState("");
+  const [cantidad, setCantidad] = useState("");
+  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
+  const [observaciones, setObservaciones] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
+  const [listaDesperdicios, setListaDesperdicios] = useState([]);
+  const [cargandoLista, setCargandoLista] = useState(true);
+
+  useEffect(() => {
+    cargarDesperdicios();
+  }, []);
+
+  const cargarDesperdicios = async () => {
+    setCargandoLista(true);
+    try {
+      const { data, error } = await supabase
+        .from("desperdicios_verduleria")
+        .select("*")
+        .order("fecha", { ascending: false });
+      if (!error && data) setListaDesperdicios(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCargandoLista(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!productoId || !cantidad) return;
     setGuardando(true);
     setMensaje(null);
 
-    const { error } = await onAgregar({
-      nombre: nombre.trim(),
-      unidad,
-      precio: Number(precio) || 0,
-      cantidad: 0,
-    });
+    const productoSeleccionado = productos.find((p) => p.id === productoId);
+
+    const nuevoRegistro = {
+      producto_id: productoId,
+      nombre_producto: productoSeleccionado ? productoSeleccionado.nombre : "",
+      cantidad: Number(cantidad),
+      fecha,
+      observaciones: observaciones.trim(),
+    };
+
+    const { error } = await supabase
+      .from("desperdicios_verduleria")
+      .insert([nuevoRegistro]);
 
     setGuardando(false);
 
     if (error) {
-      setMensaje({ tipo: "error", texto: "No se pudo agregar. Probá de nuevo." });
+      setMensaje({ tipo: "error", texto: "No se pudo registrar. Probá de nuevo." });
     } else {
-      setMensaje({ tipo: "ok", texto: `"${nombre}" agregado.` });
-      setNombre("");
-      setPrecio("");
+      setMensaje({ tipo: "ok", texto: "Desperdicio registrado correctamente." });
+      setCantidad("");
+      setObservaciones("");
+      setProductoId("");
+      cargarDesperdicios();
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-gray-400 uppercase tracking-wide">Nombre</label>
-        <input
-          type="text"
-          required
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          placeholder="Ej: Cilantro"
-          className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 focus:outline-none focus:border-gray-400 transition-colors"
-        />
-      </div>
+  const handleExportarExcel = () => {
+    exportarExcel(listaDesperdicios, "desperdicios_verduleria", [
+      { header: "Fecha", key: "fecha" },
+      { header: "Producto", key: "nombre_producto" },
+      { header: "Cantidad (kg/u)", key: "cantidad" },
+      { header: "Observaciones", key: "observaciones" },
+    ]);
+  };
 
-      <div className="grid grid-cols-2 gap-3">
+  return (
+    <div className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col gap-3">
+        <h3 className="text-[14px] font-medium text-gray-900">Registrar merma / desperdicio</h3>
+        
         <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-gray-400 uppercase tracking-wide">Unidad</label>
+          <label className="text-[11px] text-gray-400 uppercase tracking-wide">Producto</label>
           <select
-            value={unidad}
-            onChange={(e) => setUnidad(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 focus:outline-none focus:border-gray-400 transition-colors"
+            required
+            value={productoId}
+            onChange={(e) => setProductoId(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 bg-white focus:outline-none focus:border-gray-400 transition-colors"
           >
-            <option value="kg">kg</option>
-            <option value="unidad">unidad</option>
-            <option value="atado">atado</option>
-            <option value="docena">docena</option>
-            <option value="bandeja">bandeja</option>
+            <option value="">Seleccionar producto...</option>
+            {productos.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nombre} ({p.unidad})
+              </option>
+            ))}
           </select>
         </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] text-gray-400 uppercase tracking-wide">Cantidad</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              required
+              value={cantidad}
+              onChange={(e) => setCantidad(e.target.value)}
+              placeholder="Ej: 2.5"
+              className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 bg-white focus:outline-none focus:border-gray-400 transition-colors"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] text-gray-400 uppercase tracking-wide">Fecha</label>
+            <input
+              type="date"
+              required
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 bg-white focus:outline-none focus:border-gray-400 transition-colors"
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-gray-400 uppercase tracking-wide">Precio costo</label>
+          <label className="text-[11px] text-gray-400 uppercase tracking-wide">Observaciones (Opcional)</label>
           <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-            placeholder="0"
-            className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 focus:outline-none focus:border-gray-400 transition-colors"
+            type="text"
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+            placeholder="Ej: Golpeado, maduración excesiva..."
+            className="border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-900 bg-white focus:outline-none focus:border-gray-400 transition-colors"
           />
         </div>
+
+        {mensaje && (
+          <p className={`text-[13px] ${mensaje.tipo === "ok" ? "text-emerald-600" : "text-red-500"}`}>
+            {mensaje.texto}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={guardando}
+          className="bg-gray-900 text-white rounded-full py-2.5 text-[14px] font-medium hover:bg-gray-800 active:scale-[0.99] transition-all disabled:opacity-50 mt-1"
+        >
+          {guardando ? "Guardando..." : "Guardar desperdicio"}
+        </button>
+      </form>
+
+      <div className="flex flex-col gap-3 mt-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[14px] font-medium text-gray-900">Historial reciente</h3>
+          {listaDesperdicios.length > 0 && (
+            <button
+              onClick={handleExportarExcel}
+              className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-100 transition-all flex items-center gap-1.5"
+            >
+              📊 Exportar a Excel
+            </button>
+          )}
+        </div>
+
+        {cargandoLista ? (
+          <p className="text-xs text-gray-400 text-center py-4">Cargando registros...</p>
+        ) : listaDesperdicios.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 border border-dashed border-gray-200 rounded-xl">
+            <p className="text-2xl mb-1">📋</p>
+            <p className="text-xs">No hay desperdicios registrados aún.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {listaDesperdicios.map((item) => (
+              <div key={item.id} className="border border-gray-100 bg-white rounded-xl p-3 flex justify-between items-center shadow-sm">
+                <div>
+                  <p className="text-[14px] font-medium text-gray-900">{item.nombre_producto}</p>
+                  <p className="text-[12px] text-gray-500">
+                    {item.cantidad} — <span className="text-gray-400">{item.fecha}</span>
+                  </p>
+                  {item.observaciones && (
+                    <p className="text-[11px] text-gray-400 italic mt-0.5">{item.observaciones}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {mensaje && (
-        <p className={`text-[13px] ${mensaje.tipo === "ok" ? "text-emerald-600" : "text-red-500"}`}>
-          {mensaje.texto}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={guardando}
-        className="bg-gray-900 text-white rounded-full py-2.5 text-[14px] font-medium hover:bg-gray-800 active:scale-[0.99] transition-all disabled:opacity-50"
-      >
-        {guardando ? "Agregando..." : "Agregar producto"}
-      </button>
-    </form>
+    </div>
   );
 }
 
@@ -174,7 +272,7 @@ function Compartir({ productos }) {
 
 // ─── App principal ──────────────────────────────────────────────────
 export default function StockVerduleria() {
-  const { productos, loading, agregar, actualizar } = useVerduleria();
+  const { productos, loading, actualizar } = useVerduleria();
   const [tab, setTab] = useState("inventario");
   const [busqueda, setBusqueda] = useState("");
 
@@ -191,7 +289,7 @@ export default function StockVerduleria() {
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
   const valorTotal = productos.reduce((a, p) => a + (p.cantidad || 0) * (p.precio || 0), 0);
-  const tabs = ["inventario", "agregar", "compartir"];
+  const tabs = ["inventario", "desperdicios", "compartir"];
 
   return (
     <div className="min-h-screen bg-white max-w-sm mx-auto flex flex-col">
@@ -219,12 +317,12 @@ export default function StockVerduleria() {
                   : "border-gray-200 text-gray-500 hover:border-gray-300"
               }`}
             >
-              {t === "agregar" ? "+ Agregar" : t}
+              {t === "desperdicios" ? "Desperdicios" : t}
             </button>
           ))}
         </div>
 
-        {/* Buscador — solo visible en pestaña inventario */}
+        {/* Buscador */}
         {tab === "inventario" && (
           <div className="relative mt-3">
             <svg
@@ -290,8 +388,8 @@ export default function StockVerduleria() {
           </>
         )}
 
-        {/* TAB: Agregar */}
-        {tab === "agregar" && <Agregar onAgregar={agregar} />}
+        {/* TAB: Desperdicios */}
+        {tab === "desperdicios" && <Desperdicios productos={productos} />}
 
         {/* TAB: Compartir */}
         {tab === "compartir" && <Compartir productos={productos} />}

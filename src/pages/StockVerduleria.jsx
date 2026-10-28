@@ -94,8 +94,18 @@ function Desperdicios({ productos }) {
     ]);
   };
 
+  // ─── Agrupar desperdicios por fecha ───────────────────────────────
+  const desperdiciosPorFecha = listaDesperdicios.reduce((acc, item) => {
+    if (!acc[item.fecha]) {
+      acc[item.fecha] = [];
+    }
+    acc[item.fecha].push(item);
+    return acc;
+  }, {});
+
   return (
     <div className="flex flex-col gap-4">
+      {/* Formulario de carga */}
       <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col gap-3">
         <h3 className="text-[14px] font-medium text-gray-900">Registrar merma / desperdicio</h3>
         
@@ -168,9 +178,10 @@ function Desperdicios({ productos }) {
         </button>
       </form>
 
+      {/* Sección de exportación y listado agrupado por fecha */}
       <div className="flex flex-col gap-3 mt-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-[14px] font-medium text-gray-900">Historial reciente</h3>
+          <h3 className="text-[14px] font-medium text-gray-900">Historial por día</h3>
           {listaDesperdicios.length > 0 && (
             <button
               onClick={handleExportarExcel}
@@ -183,22 +194,44 @@ function Desperdicios({ productos }) {
 
         {cargandoLista ? (
           <p className="text-xs text-gray-400 text-center py-4">Cargando registros...</p>
-        ) : listaDesperdicios.length === 0 ? (
+        ) : Object.keys(desperdiciosPorFecha).length === 0 ? (
           <div className="text-center py-8 text-gray-400 border border-dashed border-gray-200 rounded-xl">
             <p className="text-2xl mb-1">📋</p>
             <p className="text-xs">No hay desperdicios registrados aún.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
-            {listaDesperdicios.map((item) => (
-              <div key={item.id} className="border border-gray-100 bg-white rounded-xl p-3 flex justify-between items-center shadow-sm">
-                <div>
-                  <p className="text-[14px] font-medium text-gray-900">{item.nombre_producto}</p>
-                  <p className="text-[12px] text-gray-500">
-                    {item.cantidad} — <span className="text-gray-400">{item.fecha}</span>
-                  </p>
-                  {item.observaciones && (
-                    <p className="text-[11px] text-gray-400 italic mt-0.5">{item.observaciones}</p>
+          <div className="flex flex-col gap-3">
+            {Object.entries(desperdiciosPorFecha).map(([fechaItem, items]) => (
+              <div key={fechaItem} className="border border-gray-200 bg-white rounded-xl p-3.5 shadow-sm flex flex-col gap-2">
+                {/* Cabecera del recuadro con la fecha */}
+                <div className="flex justify-between items-center border-b border-gray-100 pb-1.5">
+                  <span className="text-[12px] font-semibold text-gray-800 bg-gray-100 px-2 py-0.5 rounded-md">
+                    📅 {fechaItem}
+                  </span>
+                  <span className="text-[11px] text-gray-400">
+                    {items.length} {items.length === 1 ? "ítem" : "ítems"}
+                  </span>
+                </div>
+
+                {/* Lista compacta de elementos de ese día */}
+                <div className="flex flex-col gap-1.5 pt-0.5">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex justify-between items-center text-[13px]">
+                      <span className="text-gray-700 font-medium">
+                        • {item.nombre_producto}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded text-[12px]">
+                          {item.cantidad} kg/u
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Si hay alguna observación general o en los ítems, se puede ver sutilmente */}
+                  {items.some(i => i.observaciones) && (
+                    <div className="text-[11px] text-gray-400 italic mt-1 border-t border-dashed border-gray-100 pt-1">
+                      {items.filter(i => i.observaciones).map(i => `${i.nombre_producto}: ${i.observaciones}`).join(" | ")}
+                    </div>
                   )}
                 </div>
               </div>

@@ -5,6 +5,7 @@ import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
 import ProductCard from "../components/ProductCard";
 import { supabase } from "../lib/supabase";
+import { useBorrador } from "../hooks/useBorrador";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -305,7 +306,9 @@ function Compartir({ productos }) {
 
 // ─── App principal ──────────────────────────────────────────────────
 export default function StockVerduleria() {
-  const { productos, loading, actualizar } = useVerduleria();
+  const { productos: productosBase, loading, guardarCambios } = useVerduleria();
+  // Las ediciones quedan en el celular hasta tocar "Guardar stock"
+  const { productos, cambios, pendientes, editar, descartar, guardar } = useBorrador("verduleria", productosBase);
   const [tab, setTab] = useState("inventario");
   const [busqueda, setBusqueda] = useState("");
 
@@ -386,7 +389,7 @@ export default function StockVerduleria() {
       </div>
 
       {/* Contenido */}
-      <div className="flex-1 px-4 py-4 flex flex-col gap-3 pb-8">
+      <div className="flex-1 px-4 py-4 flex flex-col gap-3 pb-28">
 
         {/* TAB: Inventario */}
         {tab === "inventario" && (
@@ -396,7 +399,12 @@ export default function StockVerduleria() {
               <MetricCard label="Valor total" value={fmt(valorTotal)} accent />
             </div>
 
-            <ConteoBar tipo="verduleria" />
+            <ConteoBar
+              tipo="verduleria"
+              pendientes={pendientes}
+              onGuardar={() => guardar(guardarCambios)}
+              onDescartar={descartar}
+            />
 
             {busqueda && (
               <p className="text-[12px] text-gray-400">
@@ -415,7 +423,7 @@ export default function StockVerduleria() {
               </div>
             ) : (
               productosFiltrados.map((p) => (
-                <ProductCard key={p.id} producto={p} onUpdate={actualizar} />
+                <ProductCard key={p.id} producto={p} onUpdate={editar} modificado={!!cambios[p.id]} />
               ))
             )}
           </>

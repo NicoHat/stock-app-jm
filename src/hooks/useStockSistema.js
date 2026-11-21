@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 
 export function useStockSistema() {
@@ -70,7 +70,7 @@ export function useStockSistema() {
     }
   }, [])
 
-  const productos = productosBase.map((p) => {
+  const productos = useMemo(() => productosBase.map((p) => {
     const registro = sistemaMap[p.id]
     return {
       id: p.id,
@@ -80,7 +80,7 @@ export function useStockSistema() {
       cantidad: registro?.cantidad ?? 0,
       stock_sistema_id: registro?.id ?? null,
     }
-  })
+  }), [productosBase, sistemaMap])
 
   const actualizarCantidad = async (productoId, _stockSistemaId, cantidad) => {
     // No tocamos el estado local a mano: el número en pantalla
@@ -94,5 +94,37 @@ export function useStockSistema() {
     if (error) console.error(error)
   }
 
-  return { productos, loading, actualizarCantidad }
+  // Guarda de una sola vez todas las cantidades pendientes del borrador.
+  // cambios = { [producto_id]: { cantidad } }
+  const guardarCambios = async (cambios) => {
+    const ahora = new Date().toISOString()
+    const filas = Object.entries(cambios)
+      .filter(([, parcial]) => parcial.cantidad !== undefined)
+      .map(([productoId, parcial]) => ({
+        producto_id: productoId,
+        cantidad: parcial.cantidad,
+        updated_at: ahora,
+      }))
+    if (filas.length === 0) return { error: null }
+
+    const { error } = await supabase
+      .from('stock_sistema')
+      .upsert(filas, { onConflict: 'producto_id' })
+
+    if (error) {
+      console.error(error)
+      return { error }
+    }
+    // Reflejamos lo guardado al instante, sin esperar al realtime
+    setSistemaMap((prev) => {
+      const copia = { ...prev }
+      filas.forEach((f) => {
+        copia[f.producto_id] = { id: prev[f.producto_id]?.id ?? null, cantidad: f.cantidad }
+      })
+      return copia
+    })
+    return { error: null }
+  }
+
+  return { productos, loading, actualizarCantidad, guardarCambios }
 }

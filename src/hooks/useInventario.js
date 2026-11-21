@@ -44,5 +44,23 @@ export function useInventario() {
     return { error }
   }
 
-  return { productos, loading, agregar, actualizar }
+  // Guarda de una sola vez todos los cambios pendientes del borrador.
+  // cambios = { [id]: { cantidad?, precio?, observaciones? } }
+  const guardarCambios = async (cambios) => {
+    const ahora = new Date().toISOString()
+    const resultados = await Promise.all(
+      Object.entries(cambios).map(([id, parcial]) =>
+        supabase.from('productos').update({ ...parcial, updated_at: ahora }).eq('id', id)
+      )
+    )
+    // Reflejamos lo guardado al instante, sin esperar al realtime
+    const okIds = new Set(
+      Object.keys(cambios).filter((_, i) => !resultados[i].error)
+    )
+    setProductos(prev => prev.map(p => okIds.has(String(p.id)) ? { ...p, ...cambios[p.id] } : p))
+    const fallo = resultados.find(r => r.error)
+    return { error: fallo ? fallo.error : null }
+  }
+
+  return { productos, loading, agregar, actualizar, guardarCambios }
 }

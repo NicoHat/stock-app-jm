@@ -5,6 +5,7 @@ import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
 import ProductCard from '../components/ProductCard';
 import { supabase } from "../lib/supabase";
+import { useBorrador } from "../hooks/useBorrador";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -84,7 +85,9 @@ function Compartir({ productos }) {
 
 // ─── App principal ──────────────────────────────────────────────────
 export default function App() {
-  const { productos, loading, actualizar } = useInventario();
+  const { productos: productosBase, loading, guardarCambios } = useInventario();
+  // Las ediciones quedan en el celular hasta tocar "Guardar stock"
+  const { productos, cambios, pendientes, editar, descartar, guardar } = useBorrador("fisico", productosBase);
   const [tab, setTab] = useState("inventario");
   const [busqueda, setBusqueda] = useState("");
   
@@ -201,7 +204,7 @@ export default function App() {
       </div>
 
       {/* Contenido */}
-      <div className="flex-1 px-4 py-4 flex flex-col gap-3 pb-8">
+      <div className="flex-1 px-4 py-4 flex flex-col gap-3 pb-28">
         {tab === "inventario" && (
           <>
             <div className="grid grid-cols-2 gap-3">
@@ -209,7 +212,12 @@ export default function App() {
               <MetricCard label="Valor total" value={fmt(valorTotal)} accent />
             </div>
 
-            <ConteoBar tipo="fisico" />
+            <ConteoBar
+              tipo="fisico"
+              pendientes={pendientes}
+              onGuardar={() => guardar(guardarCambios)}
+              onDescartar={descartar}
+            />
 
             {busqueda && (
               <p className="text-[12px] text-gray-400">
@@ -233,7 +241,8 @@ export default function App() {
                 <ProductCard
                   key={p.id}
                   producto={p}
-                  onUpdate={actualizar}
+                  onUpdate={editar}
+                  modificado={!!cambios[p.id]}
                 />
               ))
             )}

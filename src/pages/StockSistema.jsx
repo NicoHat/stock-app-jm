@@ -3,7 +3,8 @@ import { useStockSistema } from "../hooks/useStockSistema";
 import { compartirPDF, compartirWhatsApp, compartirEmail } from "../utils/exportPDF";
 import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
-import ProductCard from "../components/ProductCard"; // 👈 1. Importar el componente unificado
+import ProductCard from "../components/ProductCard";
+import { useBorrador } from "../hooks/useBorrador";
 
 // ─── Métricas ───────────────────────────────────────────────────────
 function MetricCard({ label, value, accent = false }) {
@@ -79,7 +80,9 @@ function Compartir({ productos }) {
 
 // ─── App principal ──────────────────────────────────────────────────
 export default function StockSistema() {
-  const { productos, loading, actualizarCantidad } = useStockSistema();
+  const { productos: productosBase, loading, guardarCambios } = useStockSistema();
+  // Las ediciones quedan en el celular hasta tocar "Guardar stock"
+  const { productos, cambios, pendientes, editar, descartar, guardar } = useBorrador("sistema", productosBase);
   const [tab, setTab] = useState("inventario");
   const [busqueda, setBusqueda] = useState("");
 
@@ -168,7 +171,7 @@ export default function StockSistema() {
       </div>
 
       {/* Contenido */}
-      <div className="flex-1 px-4 py-4 flex flex-col gap-3 pb-8">
+      <div className="flex-1 px-4 py-4 flex flex-col gap-3 pb-28">
 
         {/* TAB: Inventario */}
         {tab === "inventario" && (
@@ -178,7 +181,12 @@ export default function StockSistema() {
               <MetricCard label="Unidades totales" value={totalUnidades} accent />
             </div>
 
-            <ConteoBar tipo="sistema" />
+            <ConteoBar
+              tipo="sistema"
+              pendientes={pendientes}
+              onGuardar={() => guardar(guardarCambios)}
+              onDescartar={descartar}
+            />
 
             {busqueda && (
               <p className="text-[12px] text-gray-400">
@@ -197,10 +205,12 @@ export default function StockSistema() {
               </div>
             ) : (
               productosFiltrados.map((p) => (
-                <ProductCard 
-                  key={p.id} 
-                  producto={p} 
-                  onUpdate={(id, partial) => actualizarCantidad(id, p.stock_sistema_id, partial.cantidad)} 
+                <ProductCard
+                  key={p.id}
+                  producto={p}
+                  onUpdate={editar}
+                  modificado={!!cambios[p.id]}
+                  soloCantidad
                 />
               ))
             )}

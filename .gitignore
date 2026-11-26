@@ -28,3 +28,7 @@ dist-ssr
 .env.local
 .env.production
 .env*.local
+
+# Supabase: archivos SQL y temporales de la CLI
+supabase/*.sql
+supabase/.temp

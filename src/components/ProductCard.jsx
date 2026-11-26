@@ -1,55 +1,10 @@
 // src/components/ProductCard.jsx
-import { memo, useState } from "react";
+import { memo } from "react";
+import CampoNumero from "./CampoNumero";
+import { saltarAlSiguiente } from "../utils/teclado";
 
 const fmt = (n) =>
   "$" + Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 0 });
-
-// Input numérico que deja tipear libre (vacío, "1.", "0,5") mientras está enfocado
-// y le pasa al padre el número ya parseado.
-function CampoNumero({ value, onChange, className, ...rest }) {
-  const [texto, setTexto] = useState("");
-  const [enfocado, setEnfocado] = useState(false);
-
-  return (
-    <input
-      type="number"
-      {...rest}
-      value={enfocado ? texto : value ?? ""}
-      onFocus={(e) => {
-        setTexto(value === undefined || value === null ? "" : String(value));
-        setEnfocado(true);
-        const el = e.target;
-        requestAnimationFrame(() => el.select());
-      }}
-      onBlur={() => setEnfocado(false)}
-      onChange={(e) => {
-        const raw = e.target.value;
-        setTexto(raw);
-        // Número a medio escribir (ej. "1."): esperamos a que termine
-        if (e.target.validity?.badInput) return;
-        const num = raw === "" ? 0 : Number(raw.replace(",", "."));
-        if (!Number.isNaN(num)) onChange(Math.max(0, num));
-      }}
-      className={className}
-    />
-  );
-}
-
-// Enter en la cantidad: salta a la cantidad del próximo producto en pantalla.
-// En el último, cierra el teclado.
-function saltarAlSiguiente(e) {
-  if (e.key !== "Enter") return;
-  e.preventDefault();
-  const campos = Array.from(document.querySelectorAll('input[data-campo="cantidad"]'));
-  const siguiente = campos[campos.indexOf(e.currentTarget) + 1];
-  if (siguiente) {
-    siguiente.focus({ preventScroll: true });
-    // centrado, para que no quede tapado por el botón flotante de guardar
-    siguiente.scrollIntoView({ block: "center", behavior: "smooth" });
-  } else {
-    e.currentTarget.blur();
-  }
-}
 
 function ProductCard({ producto, onUpdate, modificado = false, soloCantidad = false }) {
   const subtotal = (producto.cantidad || 0) * (producto.precio || 0);

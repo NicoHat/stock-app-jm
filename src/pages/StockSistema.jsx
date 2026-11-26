@@ -5,6 +5,7 @@ import { exportarExcel } from "../utils/exportExcel";
 import ConteoBar from "../components/ConteoBar";
 import ProductCard from "../components/ProductCard";
 import { useBorrador } from "../hooks/useBorrador";
+import HistorialPalta from "../components/HistorialPalta";
 
 // ─── Métricas ───────────────────────────────────────────────────────
 function MetricCard({ label, value, accent = false }) {
@@ -180,6 +181,9 @@ export default function StockSistema() {
               <MetricCard label="Productos" value={productos.length} />
               <MetricCard label="Unidades totales" value={totalUnidades} accent />
             </div>
+
+            {/* Historial de palta decomisada (el mismo de Admin) */}
+            <HistorialPalta />
 
             <ConteoBar
               tipo="sistema"

@@ -23,6 +23,8 @@ function iguales(a, b) {
   const vacio = (v) => v === null || v === undefined || v === ''
   if (vacio(a) && vacio(b)) return true
   if (typeof a === 'number' || typeof b === 'number') return Number(a) === Number(b)
+  // Listas (ej. marcas de palta): se comparan por contenido
+  if (typeof a === 'object' || typeof b === 'object') return JSON.stringify(a ?? []) === JSON.stringify(b ?? [])
   return a === b
 }
 
